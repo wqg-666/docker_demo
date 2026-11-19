@@ -1,0 +1,47 @@
+FROM golang:alpine
+#FROM 用来指定构建 Docker 镜像的基础镜像。为我们的镜像设置必要的环境变量
+
+#GO111MODULE=on	开启 Go Modules 模式
+#CGO_ENABLED=0	禁用 CGO
+#GOOS=linux	编译目标操作系统为 Linux
+#GOARCH=amd64	编译目标架构为 x86-64
+ENV GO111MODULE=on \
+    CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64
+
+# 移动到工作目录：/build
+WORKDIR /build
+
+#第一个 .：当前 Docker 构建上下文中的所有文件。
+#第二个 .：当前容器工作目录，也就是 /build。
+# 将代码复制到容器中
+COPY . .
+#RUN 表示在构建镜像时执行命令。
+#go build：编译 Go 项目。
+#-o app：指定编译生成的可执行文件名称为 app。
+#.：编译当前目录下的 Go 项目。
+# 将我们的代码编译成二进制可执行文件app
+RUN go build -o app .
+
+#将容器内部的工作目录切换到 /dist。
+#如果目录不存在，Docker 会自动创建。
+#移动到用于存放生成的二进制文件的 /dist 目录
+WORKDIR /dist
+
+#就是把 /build/app 复制到当前目录 /dist。
+# 将二进制文件从 /build/app 目录复制到这里
+RUN cp /build/app .
+
+# 声明服务端口
+EXPOSE 8888
+
+# CMD 用来指定容器启动时默认执行的命令
+CMD ["/build/app"]
+
+#golang:alpine
+ - 包含 Go 编译环境
+ - 复制 Go 源代码
+ - 编译生成 app
+ - 将 app 复制到 /dist
+ - 最终镜像仍然基于 golang:alpine
